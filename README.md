@@ -91,7 +91,7 @@ The output should show the Jaccard Similarity between document pairs in the foll
 (doc2, doc3) -> 50%  
 ```
 
-# Movie Script Analysis
+# document-similarity
 
 ## Prerequisites
 Ensure you have the following software installed:
@@ -102,29 +102,54 @@ Ensure you have the following software installed:
 
 ## Project Structure
 ```
-movie-script-analysis/
-│-- src/main/java/com/movie/script/analysis/
-│   │-- MovieScriptAnalysis.java          # Main driver class
-│   │-- CharacterWordMapper.java          # Mapper for frequent words
-│   │-- CharacterWordReducer.java         # Reducer for frequent words
-│   │-- DialogueLengthMapper.java         # Mapper for dialogue length
-│   │-- DialogueLengthReducer.java        # Reducer for dialogue length
-│   │-- UniqueWordsMapper.java            # Mapper for unique words
-│   │-- UniqueWordsReducer.java           # Reducer for unique words
+document-similarity/
+│-- src/main/java/com/example/
+│   │-- DocumentSimilarityDriver.java       # Main driver class
+│   │-- DocumentSimilarityCombiner.java    # Combiner for document similarity
+│   │-- DocumentSimilarityMapper.java      # Mapper for document similarity
+│   │-- DocumentSimilarityReducer.java     # Reducer for document similarity
+│   │-- JaccardSimilarityReducer.java      # Reducer for Jaccard Similarity
 │-- dataset/
-│   ├── movie_dialogues.txt               # Sample dataset
-│-- pom.xml                               # Maven build file
-│-- README.md                             # Project documentation
+│   ├── document_data.txt                  # Sample dataset
+│-- pom.xml                                # Maven build file
+│-- README.md                              # Project documentation
 ```
+### 1. **DocumentSimilarityDriver.java**
+The **DocumentSimilarityDriver** sets up and runs the Hadoop MapReduce job. It configures the input/output paths, job name, and key-value classes. The driver defines the mapper, combiner, and reducer classes to be used. Once configured, it executes the job and checks for completion.
 
-## Objectives
-By completing this project, you will:
+**Key Logic:**
+- Initializes Hadoop job configuration.
+- Defines Mapper, Reducer, and Combiner.
+- Starts the job and waits for completion.
 
-- **Understand Hadoop's Architecture**: Learn how Hadoop's HDFS and MapReduce framework process large datasets.
-- **Build and Deploy a MapReduce Job**: Gain experience in compiling and running a Java-based MapReduce job on a Hadoop cluster.
-- **Work with Docker Containers**: Learn to use Docker for managing Hadoop components and transferring files.
-- **Analyze Movie Script Data**: Extract insights from movie dialogues, such as unique words, most frequent words, and dialogue lengths.
+### 2. **DocumentSimilarityCombiner.java**
+The **DocumentSimilarityCombiner** performs local aggregation before data is sent to the reducer. It aggregates the word counts for each document, which reduces the amount of data transferred between the map and reduce phases.
 
+**Key Logic:**
+- Aggregates word counts locally before sending them to the reducer.
+- Reduces data transfer by summing word occurrences.
+
+### 3. **DocumentSimilarityMapper.java**
+The **DocumentSimilarityMapper** processes each document, tokenizes the content, and emits key-value pairs. The key is a word, and the value is the document ID. This enables the reducer to know which documents share common words.
+
+**Key Logic:**
+- Reads document and tokenizes content.
+- Emits word-document pairs to identify shared words.
+
+### 4. **DocumentSimilarityReducer.java**
+The **DocumentSimilarityReducer** groups document IDs by shared words and generates document pairs. It computes the **Jaccard Similarity** score, which measures the overlap of words between document pairs. Document pairs below a certain threshold are filtered out.
+
+**Key Logic:**
+- Groups document IDs by shared words.
+- Generates document pairs and calculates Jaccard Similarity.
+- Filters pairs with low similarity.
+
+### 5. **JaccardSimilarityReducer.java**
+The **JaccardSimilarityReducer** calculates the final similarity score between document pairs by applying the **Jaccard Similarity** formula. It computes the intersection and union of words between two documents and filters out pairs with a similarity score below the threshold.
+
+**Key Logic:**
+- Calculates intersection and union of words for document pairs.
+- Computes Jaccard Similarity and filters based on a threshold.
 ## Setup and Execution
 
 ### 1. Start the Hadoop Cluster
@@ -173,7 +198,7 @@ hadoop fs -mkdir -p /input/dataset
 ```
 Copy the input dataset to HDFS:
 ```bash
-hadoop fs -put movie_dialogues.txt /input/dataset
+hadoop fs -put /opt/hadoop-3.2.1/share/hadoop/mapreduce/Doc1.txt /input/dataset/
 ```
 
 ### 8. Execute the MapReduce Job
