@@ -91,82 +91,126 @@ The output should show the Jaccard Similarity between document pairs in the foll
 (doc2, doc3) -> 50%  
 ```
 
----
+# Movie Script Analysis
 
-### **🛠 Environment Setup: Running Hadoop in Docker**  
+## Prerequisites
+Ensure you have the following software installed:
 
-Since we are using **Docker Compose** to run a Hadoop cluster, follow these steps to set up your environment.  
+- **Java 8+**
+- **Apache Hadoop (v3.2.1 or later)**
+- **Apache Maven** (for building the project, if needed)
 
-#### **Step 1: Install Docker & Docker Compose**  
-- **Windows**: Install **Docker Desktop** and enable WSL 2 backend.  
-- **macOS/Linux**: Install Docker using the official guide: [Docker Installation](https://docs.docker.com/get-docker/)  
-
-#### **Step 2: Start the Hadoop Cluster**  
-Navigate to the project directory where `docker-compose.yml` is located and run:  
-```sh
-docker-compose up -d
-```  
-This will start the Hadoop NameNode, DataNode, and ResourceManager services.  
-
-#### **Step 3: Access the Hadoop Container**  
-Once the cluster is running, enter the **Hadoop master node** container:  
-```sh
-docker exec -it hadoop-master /bin/bash
+## Project Structure
+```
+movie-script-analysis/
+│-- src/main/java/com/movie/script/analysis/
+│   │-- MovieScriptAnalysis.java          # Main driver class
+│   │-- CharacterWordMapper.java          # Mapper for frequent words
+│   │-- CharacterWordReducer.java         # Reducer for frequent words
+│   │-- DialogueLengthMapper.java         # Mapper for dialogue length
+│   │-- DialogueLengthReducer.java        # Reducer for dialogue length
+│   │-- UniqueWordsMapper.java            # Mapper for unique words
+│   │-- UniqueWordsReducer.java           # Reducer for unique words
+│-- dataset/
+│   ├── movie_dialogues.txt               # Sample dataset
+│-- pom.xml                               # Maven build file
+│-- README.md                             # Project documentation
 ```
 
----
+## Objectives
+By completing this project, you will:
 
-### **📦 Building and Running the MapReduce Job with Maven**  
+- **Understand Hadoop's Architecture**: Learn how Hadoop's HDFS and MapReduce framework process large datasets.
+- **Build and Deploy a MapReduce Job**: Gain experience in compiling and running a Java-based MapReduce job on a Hadoop cluster.
+- **Work with Docker Containers**: Learn to use Docker for managing Hadoop components and transferring files.
+- **Analyze Movie Script Data**: Extract insights from movie dialogues, such as unique words, most frequent words, and dialogue lengths.
 
-#### **Step 1: Build the JAR File**  
-Ensure Maven is installed, then navigate to your project folder and run:  
-```sh
+## Setup and Execution
+
+### 1. Start the Hadoop Cluster
+Run the following command to start the Hadoop cluster:
+```bash
+docker compose up -d
+```
+
+### 2. Build the Code
+Build the code using Maven:
+```bash
 mvn clean package
-```  
-This will generate a JAR file inside the `target` directory.  
-
-#### **Step 2: Copy the JAR File to the Hadoop Container**  
-Move the compiled JAR into the running Hadoop container:  
-```sh
-docker cp target/similarity.jar hadoop-master:/opt/hadoop-3.2.1/share/hadoop/mapreduce/similarity.jar
 ```
 
----
-
-### **📂 Uploading Data to HDFS**  
-
-#### **Step 1: Create an Input Directory in HDFS**  
-Inside the Hadoop container, create the directory where input files will be stored:  
-```sh
-hdfs dfs -mkdir -p /input
+### 3. Move JAR File to Shared Folder
+Move the generated JAR file to a shared folder:
+```bash
+mv target/movie-script-analysis-1.0.jar shared-folder/input/code/
 ```
 
-#### **Step 2: Upload Dataset to HDFS**  
-Copy your local dataset into the Hadoop cluster’s HDFS:  
-```sh
-hdfs dfs -put /path/to/local/input/* /input/
+### 4. Copy JAR to Docker Container
+Copy the JAR file to the Hadoop ResourceManager container:
+```bash
+docker cp shared-folder/input/code/movie-script-analysis-1.0.jar resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
 ```
 
----
-
-### **🚀 Running the MapReduce Job**  
-
-Run the Hadoop job using the JAR file inside the container:  
-```sh
-hadoop jar similarity.jar DocumentSimilarityDriver /input /output_similarity /output_final
+### 5. Move Dataset to Docker Container
+Copy the dataset to the Hadoop ResourceManager container:
+```bash
+docker cp dataset/movie_dialogues.txt resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
 ```
 
----
-
-### **📊 Retrieving the Output**  
-
-To view the results stored in HDFS:  
-```sh
-hdfs dfs -cat /output_final/part-r-00000
+### 6. Connect to Docker Container
+Access the Hadoop ResourceManager container:
+```bash
+docker exec -it resourcemanager /bin/bash
+```
+Navigate to the Hadoop directory:
+```bash
+cd /opt/hadoop-3.2.1/share/hadoop/mapreduce/
 ```
 
-If you want to download the output to your local machine:  
-```sh
-hdfs dfs -get /output_final /path/to/local/output
+### 7. Set Up HDFS
+Create a folder in HDFS for the input dataset:
+```bash
+hadoop fs -mkdir -p /input/dataset
 ```
----
+Copy the input dataset to HDFS:
+```bash
+hadoop fs -put movie_dialogues.txt /input/dataset
+```
+
+### 8. Execute the MapReduce Job
+Run the job with the following command:
+```bash
+hadoop jar /opt/hadoop-3.2.1/share/hadoop/mapreduce/movie-script-analysis-1.0.jar com.movie.script.analysis.MovieScriptAnalysis /input/dataset /output
+```
+
+### 9. View the Output
+To check the output directory on HDFS:
+```bash
+hadoop fs -ls /output
+```
+To view the results:
+```bash
+hadoop fs -cat /output/part-*
+```
+
+### 10. Copy Output from HDFS to Local OS
+Copy the output from HDFS to your local machine:
+```bash
+hdfs dfs -get /output /opt/hadoop-3.2.1/share/hadoop/mapreduce/
+```
+Then, use Docker to copy from the container to your local machine:
+```bash
+exit
+docker cp resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/output/ shared-folder/output/
+```
+
+## Troubleshooting
+
+- **IndexOutOfBoundsException**: Ensure that the correct input and output paths are provided.
+- **Multiple SLF4J Bindings Warning**: This is a common logging issue and does not affect execution.
+- **File Not Found Error**: Make sure the input file exists in HDFS before running the job.
+
+## Contributors
+- **Tarun Kumar Kanakala**
+
+
