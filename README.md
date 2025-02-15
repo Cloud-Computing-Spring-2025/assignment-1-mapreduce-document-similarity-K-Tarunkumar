@@ -139,22 +139,21 @@ Build the code using Maven:
 mvn clean package
 ```
 
-### 3. Move JAR File to Shared Folder
-Move the generated JAR file to a shared folder:
-```bash
-mv target/movie-script-analysis-1.0.jar shared-folder/input/code/
+
 ```
 
 ### 4. Copy JAR to Docker Container
 Copy the JAR file to the Hadoop ResourceManager container:
 ```bash
-docker cp shared-folder/input/code/movie-script-analysis-1.0.jar resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
+docker cp /workspaces/assignment-1-mapreduce-document-similarity-K-Tarunkumar/target/DocumentSimilarity-0.0.1-SNAPSHOT.jar resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
 ```
 
 ### 5. Move Dataset to Docker Container
 Copy the dataset to the Hadoop ResourceManager container:
 ```bash
-docker cp dataset/movie_dialogues.txt resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
+docker cp /workspaces/assignment-1-mapreduce-document-similarity-K-Tarunkumar/input/Doc1.txt resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
+docker cp /workspaces/assignment-1-mapreduce-document-similarity-K-Tarunkumar/input/Doc2.txt resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
+docker cp /workspaces/assignment-1-mapreduce-document-similarity-K-Tarunkumar/input/Doc3.txt resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/
 ```
 
 ### 6. Connect to Docker Container
@@ -180,7 +179,7 @@ hadoop fs -put movie_dialogues.txt /input/dataset
 ### 8. Execute the MapReduce Job
 Run the job with the following command:
 ```bash
-hadoop jar /opt/hadoop-3.2.1/share/hadoop/mapreduce/movie-script-analysis-1.0.jar com.movie.script.analysis.MovieScriptAnalysis /input/dataset /output
+hadoop jar /opt/hadoop-3.2.1/share/hadoop/mapreduce/DocumentSimilarity-0.0.1-SNAPSHOT.jar com.example.controller.DocumentSimilarityDriver /input/dataset/* /output
 ```
 
 ### 9. View the Output
@@ -201,7 +200,7 @@ hdfs dfs -get /output /opt/hadoop-3.2.1/share/hadoop/mapreduce/
 Then, use Docker to copy from the container to your local machine:
 ```bash
 exit
-docker cp resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/output/ shared-folder/output/
+docker cp resourcemanager:/opt/hadoop-3.2.1/share/hadoop/mapreduce/output/   /workspaces/assignment-1-mapreduce-document-similarity-K-Tarunkumar/output
 ```
 
 ## Troubleshooting
